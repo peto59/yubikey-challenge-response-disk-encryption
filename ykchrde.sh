@@ -25,15 +25,16 @@ function enroll_key() {
     local uuid=$1
     local old_password=$2
     local new_password=$3
-    echo "Ignore following cryptsetup messages"
+    #echo "Ignore following cryptsetup messages"
     expect <(
     cat <<EXPECTSCRIPT
-    log_user 1
+    log_user 0
+    set timeout -1
     spawn cryptsetup luksAddKey /dev/disk/by-uuid/$uuid
     expect {
         "Enter any existing passphrase: " {
             send "$old_password\n"
-            expect {
+            expect {
                 "Enter new passphrase for key slot: " {
                     send "$new_password\n"
                     expect {
@@ -48,7 +49,10 @@ function enroll_key() {
                                     send_user "Something went wrong Code:3\n"
                                 }
                                 default {
+                                    #set unmatched_output \$expect_out(buffer) # Capture the output leading to default case
+                                    send_user "Something went wrong Code:2\nTriggered by: \$expect_out(buffer)\n"
                                     send_user "Something went wrong Code:2\n"
+                                    exp_continue
                                 }
                             }
                         }
@@ -74,10 +78,11 @@ function open() {
     local uuid=$1
     local password=$2
     local mapping=$3
-    echo "Ignore following cryptsetup messages"
+    #echo "Ignore following cryptsetup messages"
     expect <(
     cat <<EXPECTSCRIPT
-    log_user 1
+    log_user 0
+    set timeout -1
     spawn cryptsetup open /dev/disk/by-uuid/$uuid $mapping
     expect {
         "Enter passphrase for /dev/disk/by-uuid/$uuid: " {
