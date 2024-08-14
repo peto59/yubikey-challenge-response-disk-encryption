@@ -1,5 +1,5 @@
 pkgname=yubikey-challange-response-disk-encryption
-pkgver=r17.72ee5e8
+pkgver=r20.eb98721
 pkgrel=1
 plgdesc='Package to enroll and unlock LUKS containers with yubikey challange-response system where challange compromises of user password and UUID of partition'
 arch=('any')
@@ -18,7 +18,7 @@ pkgver() {
 
 package() {
     install -d "$pkgdir/etc/${pkgname}"
-    install -Dm644 "$srcdir/ykchrde.conf" "$pkgdir/etc/${pkgname}/ykchrde.conf"
+    install -Dm644 "$srcdir/ykchrde.conf" "$pkgdir/etc/ykchrde.conf"
 
     install -d "$pkgdir/usr/bin/${pkgname}"
     install -Dm755 "$srcdir/ykchrde.sh" "$pkgdir/usr/bin/ykchrde.sh"

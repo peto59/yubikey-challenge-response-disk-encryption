@@ -1,6 +1,7 @@
 #!/bin/bash
 build() {
     add_binary /bin/bash
+    add_binary /usr/bin/python
     add_binary /usr/bin/[
     add_binary /usr/bin/sha512sum
     add_binary /usr/bin/awk
