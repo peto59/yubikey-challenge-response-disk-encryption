@@ -29,3 +29,4 @@ done < "ykchrde.conf"
 
 
 printf "%s\n" "${!config[@]}" "${config[@]}" | pr -2t
+

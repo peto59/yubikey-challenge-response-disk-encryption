@@ -36,3 +36,4 @@ done < "ykchrde.conf"
 printf "Drives count = ${#drives[@]}\n"
 printf "%s\n" "${!drives[@]}" "${drives[@]}" | pr -2t
 printf $(parseDriveProperties ${drives[0]})["uuid"]
+
