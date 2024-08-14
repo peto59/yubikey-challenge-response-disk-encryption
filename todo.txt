@@ -1,9 +1,1 @@
-add yubikey section to config where each yubikey is recognized with serial number and give which slot to use
-[yubikey]
-serial = 4441234
-slot = 1
-[yubikey]
-serial = 94345
-slot = 2
-
-you can get serial number of yubikey with ykman list --serials
+nothing, for now
