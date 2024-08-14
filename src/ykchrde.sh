@@ -51,7 +51,7 @@ while IFS='=' read -r key value; do
         esac
         
     fi
-done < "/etc/yubikey-challange-response-disk-encryption/ykchrde.conf"
+done < "/etc/ykchrde.conf"
 
 drive_count=$drive_index
 yubikey_count=$yubikey_index
