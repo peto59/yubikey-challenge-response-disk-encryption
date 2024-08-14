@@ -1,0 +1,31 @@
+#!/bin/bash
+build() {
+    add_binary /bin/bash
+    add_binary /usr/bin/[
+    add_binary /usr/bin/sha512sum
+    add_binary /usr/bin/awk
+    add_binary /usr/bin/ykchalresp
+    add_binary /usr/bin/expect
+    add_binary /usr/bin/cryptsetup
+    add_binary /usr/bin/cat
+    add_binary /usr/bin/ykman
+    add_binary /usr/bin/tr
+    add_binary /usr/bin/cut
+    add_binary /usr/bin/getopt
+    add_binary /usr/bin/blkid
+    add_binary /usr/bin/tr
+    add_binary /usr/bin/tr
+    add_binary /usr/bin/tr
+    add_binary /usr/bin/tr
+
+    add_file /etc/yubikey-challange-response-disk-encryption/ykchrde.conf
+
+    add_runscript
+
+}
+
+help() {
+    cat <<HELPEOF
+    This hook adds support to unlock luks containers encrypted with ykchrde at boot time while using systemd initramfs
+HELPEOF
+}

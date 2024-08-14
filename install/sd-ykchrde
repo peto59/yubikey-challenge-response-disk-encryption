@@ -1,0 +1,48 @@
+#!/bin/bash
+build() {
+    add_binary /bin/bash
+    add_binary /usr/bin/[
+    add_binary /usr/bin/sha512sum
+    add_binary /usr/bin/awk
+    add_binary /usr/bin/ykchalresp
+    add_binary /usr/bin/expect
+    add_binary /usr/bin/cryptsetup
+    add_binary /usr/bin/cat
+    add_binary /usr/bin/ykman
+    add_binary /usr/bin/tr
+    add_binary /usr/bin/cut
+    add_binary /usr/bin/getopt
+    add_binary /usr/bin/blkid
+    add_binary /usr/bin/tr
+    add_binary /usr/bin/tr
+    add_binary /usr/bin/tr
+    add_binary /usr/bin/tr
+
+    add_file /etc/yubikey-challange-response-disk-encryption/ykchrde.conf
+
+
+    cat >"$BUILDROOT/usr/lib/systemd/system/ykchrde.service" <<EOF
+[Unit]
+Description=Unlock LUKS with ykchrde
+Before=cryptsetup-pre.target
+DefaultDependencies=no
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/ykchrde.sh open
+EOF
+    add_systemd_unit cryptsetup-pre.target
+
+    cd "$BUILDROOT/usr/lib/systemd/system/sysinit.target.wants" || exit
+
+    ln -sf /usr/lib/systemd/system/cryptsetup-pre.target cryptsetup-pre.target
+
+    ln -sf /usr/lib/systemd/system/ykchrde.service ykchrde.service
+
+}
+
+help() {
+    cat <<HELPEOF
+    This hook adds support to unlock luks containers encrypted with ykchrde at boot time while using systemd initramfs
+HELPEOF
+}

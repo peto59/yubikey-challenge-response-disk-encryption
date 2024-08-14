@@ -6,7 +6,7 @@ arch=('any')
 license=('GPL')
 depends=('bash' 'yubikey-personalization' 'yubikey-manager' 'util-linux' 'coreutils' 'expect' 'gawk')
 url='https://github.com/peto59/yubikey-challange-response-disk-encryption'
-backup=('etc/yubikey-challange-response-disk-encryption/ykchrde.conf')
+backup=('/etc/yubikey-challange-response-disk-encryption/ykchrde.conf')
 source=('git+https://github.com/peto59/yubikey-challange-response-disk-encryption.git')
 
 pkgver() {
@@ -20,10 +20,9 @@ package() {
     install -Dm644 ykchrde.conf "$pkgdir/etc/${pkgname}/ykchrde.conf"
 
     install -d "$pkgdir/usr/bin/${pkgname}"
-    install -Dm755 ykchrde.sh "$pkgdir/usr/bin/${pkgname}/ykchrde.sh"
+    install -Dm755 ykchrde.sh "$pkgdir/usr/bin/ykchrde.sh"
 
     install -Dm644 hooks/ykchrde "$pkgdir/usr/lib/initcpio/hooks/ykchrde"
-    install -Dm644 hooks/sd-ykchrde "$pkgdir/usr/lib/initcpio/hooks/sd-ykchrde"
 
     install -Dm644 install/ykchrde "$pkgdir/usr/lib/initcpio/install/ykchrde"
     install -Dm644 install/sd-ykchrde "$pkgdir/usr/lib/initcpio/install/sd-ykchrde"
