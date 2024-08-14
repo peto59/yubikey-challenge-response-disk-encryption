@@ -14,12 +14,9 @@ build() {
     add_binary /usr/bin/cut
     add_binary /usr/bin/getopt
     add_binary /usr/bin/blkid
-    add_binary /usr/bin/tr
-    add_binary /usr/bin/tr
-    add_binary /usr/bin/tr
-    add_binary /usr/bin/tr
+    add_binary /usr/bin/ykchrde.sh
 
-    add_file /etc/yubikey-challange-response-disk-encryption/ykchrde.conf
+    add_file /etc/ykchrde.conf
 
 
     cat >"$BUILDROOT/usr/lib/systemd/system/ykchrde.service" <<EOF
