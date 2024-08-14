@@ -1,7 +1,16 @@
-
-declare -a drives
-declare -A driveProps
-currentSection=""
+parseDriveProperties() {
+    local propertiesString="$1"
+    local tempIFS=$IFS
+    IFS=' '
+    read -ra pairs <<< "$propertiesString"
+    declare -A driveProps
+    for pair in "${pairs[@]}"; do
+        IFS='=' read -r key value <<< "$pair"
+        driveProps["$key"]=$value
+    done
+    IFS=$tempIFS
+    echo "${driveProps["uuid"]}"
+}
 
 declare -a drives
 currentDriveIndex=-1
@@ -24,5 +33,6 @@ while IFS= read -r line; do
     fi
 done < "ykchrde.conf"
 
-printf "%s\n" "${!config[@]}" "${config[@]}" | pr -2t
-
+printf "Drives count = ${#drives[@]}\n"
+printf "%s\n" "${!drives[@]}" "${drives[@]}" | pr -2t
+printf $(parseDriveProperties ${drives[0]})["uuid"]

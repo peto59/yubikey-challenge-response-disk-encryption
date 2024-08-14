@@ -4,4 +4,4 @@ pkgrel=1
 plgdesc='Package to enroll and unlock LUKS containers with yubikey challange-response system where challange compromises of user password and UUID of partition'
 arch=('any')
 license=('GPL')
-depends=('bash' 'yubikey-personalization' 'util-linux' 'coreutils' 'expect' 'gawk')
+depends=('bash' 'yubikey-personalization' 'yubikey-manager' 'util-linux' 'coreutils' 'expect' 'gawk')
