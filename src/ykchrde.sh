@@ -183,12 +183,12 @@ echo "$state"
 }
 
 ##########################################################################YUBIKEY SLOT############################################
-serial=$(ykman list --serials | tr '\n' ':' | cut -d ':' -f1)
+serial=$(ykinfo -s | tr -d 'serial: ')
 while [[ -z $serial ]]; do
     echo "No Yubikey inserted"
     echo "Press ctrl+c to exit"
     sleep 1
-    serial=$(ykman list --serials | tr '\n' ':' | cut -d ':' -f1)
+    serial=$(ykinfo -s | tr -d 'serial: ')
 done
 yubikey_slot=1
 for (( i=0; i<$yubikey_count; i++))
