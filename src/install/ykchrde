@@ -5,10 +5,10 @@ build() {
     add_binary /usr/bin/sha512sum
     add_binary /usr/bin/awk
     add_binary /usr/bin/ykchalresp
+    add_binary /usr/bin/ykinfo
     add_binary /usr/bin/expect
     add_binary /usr/bin/cryptsetup
     add_binary /usr/bin/cat
-    add_binary /usr/bin/ykman
     add_binary /usr/bin/tr
     add_binary /usr/bin/getopt
     add_binary /usr/bin/blkid
