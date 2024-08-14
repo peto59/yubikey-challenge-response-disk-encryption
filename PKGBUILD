@@ -1,5 +1,5 @@
 pkgname=yubikey-challange-response-disk-encryption
-pkgver=r24.2e6baba
+pkgver=r25.c2c3597
 pkgrel=1
 plgdesc='Package to enroll and unlock LUKS containers with yubikey challange-response system where challange compromises of user password and UUID of partition'
 arch=('any')

@@ -16,6 +16,8 @@ build() {
 
     add_file /etc/ykchrde.conf
 
+    add_full_dir /usr/lib/tcl8.6
+
 
     cat >"$BUILDROOT/usr/lib/systemd/system/ykchrde.service" <<EOF
 [Unit]
