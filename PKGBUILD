@@ -8,6 +8,7 @@ depends=('bash' 'yubikey-personalization' 'yubikey-manager' 'util-linux' 'coreut
 url='https://github.com/peto59/yubikey-challange-response-disk-encryption'
 backup=('etc/yubikey-challange-response-disk-encryption/ykchrde.conf')
 source=('git+https://github.com/peto59/yubikey-challange-response-disk-encryption.git')
+sha256sums=('SKIP')
 
 pkgver() {
   cd "${pkgname}"

@@ -11,3 +11,4 @@ CTestTestfile.cmake
 _deps
 myempty.img
 test*.sh
+/yubikey-challange-response-disk-encryption
