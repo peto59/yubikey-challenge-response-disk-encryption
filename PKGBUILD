@@ -1,11 +1,11 @@
-pkgname=yubikey-challange-response-disk-encryption
+pkgname=yubikey-challenge-response-disk-encryption
 pkgver=r25.c2c3597
 pkgrel=1
-plgdesc='Package to enroll and unlock LUKS containers with yubikey challange-response system where challange compromises of user password and UUID of partition'
+plgdesc='Package to enroll and unlock LUKS containers with yubikey challenge-response system where challenge compromises of user password and UUID of partition'
 arch=('any')
 license=('GPL')
 depends=('bash' 'yubikey-personalization' 'util-linux' 'coreutils' 'expect' 'gawk')
-url='https://github.com/peto59/yubikey-challange-response-disk-encryption'
+url='https://github.com/peto59/yubikey-challenge-response-disk-encryption'
 backup=('etc/ykchrde.conf')
 source=('git+https://github.com/peto59/yubikey-challange-response-disk-encryption.git')
 sha256sums=('SKIP')
