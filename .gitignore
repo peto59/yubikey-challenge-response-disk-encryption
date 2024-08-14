@@ -12,3 +12,6 @@ _deps
 myempty.img
 test*.sh
 /yubikey-challange-response-disk-encryption
+*.zst
+/pkg
+/src/yubikey-challange-response-disk-encryption

@@ -1,5 +1,5 @@
 pkgname=yubikey-challange-response-disk-encryption
-pkgver=1
+pkgver=r17.72ee5e8
 pkgrel=1
 plgdesc='Package to enroll and unlock LUKS containers with yubikey challange-response system where challange compromises of user password and UUID of partition'
 arch=('any')
@@ -18,13 +18,13 @@ pkgver() {
 
 package() {
     install -d "$pkgdir/etc/${pkgname}"
-    install -Dm644 src/ykchrde.conf "$pkgdir/etc/${pkgname}/ykchrde.conf"
+    install -Dm644 "$srcdir/ykchrde.conf" "$pkgdir/etc/${pkgname}/ykchrde.conf"
 
     install -d "$pkgdir/usr/bin/${pkgname}"
-    install -Dm755 src/ykchrde.sh "$pkgdir/usr/bin/ykchrde.sh"
+    install -Dm755 "$srcdir/ykchrde.sh" "$pkgdir/usr/bin/ykchrde.sh"
 
-    install -Dm644 src/hooks/ykchrde "$pkgdir/usr/lib/initcpio/hooks/ykchrde"
+    install -Dm644 "$srcdir/hooks/ykchrde" "$pkgdir/usr/lib/initcpio/hooks/ykchrde"
 
-    install -Dm644 src/install/ykchrde "$pkgdir/usr/lib/initcpio/install/ykchrde"
-    install -Dm644 src/install/sd-ykchrde "$pkgdir/usr/lib/initcpio/install/sd-ykchrde"
+    install -Dm644 "$srcdir/install/ykchrde" "$pkgdir/usr/lib/initcpio/install/ykchrde"
+    install -Dm644 "$srcdir/install/sd-ykchrde" "$pkgdir/usr/lib/initcpio/install/sd-ykchrde"
 }
