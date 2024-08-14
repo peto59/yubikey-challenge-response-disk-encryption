@@ -2,5 +2,10 @@
 
 run_hook ()
 {
+    mknod /dev/ptmx c 5 2
+    chmod 666 /dev/ptmx
+    mkdir /dev/pts
+    chmod 755 /dev/pts
+    mount -t devpts -o gid=5,mode=620 none /dev/pts
     /usr/bin/ykchrde.sh open
 }
