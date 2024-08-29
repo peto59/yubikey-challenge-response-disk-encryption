@@ -11,7 +11,6 @@ source=('git+https://github.com/peto59/yubikey-challange-response-disk-encryptio
 sha256sums=('SKIP')
 
 pkgver() {
-  cd "${pkgname}"
   printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
 }
 
