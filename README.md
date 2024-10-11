@@ -14,6 +14,29 @@ Written for and tested on **Archlinux**. Might not work on other distributions.
 Read through the whole README to understand fully how `ykchrde` works and the recommended usage.
 # Disclaimer
 This is a project that I threw together over a few nights for my personal use. Even though I made it to the best of my abilities and will try to keep it updated, I don't guarantee that it will work or is secure. Use at your own risk.
+# Table of Contents  
+- [Intro](#yubikey-challenge-response-disk-encryption)  
+- [Disclaimer](#disclaimer)  
+- [Table of Contents](#table-of-contents)  
+- [Prerequisites](#prerequisites)  
+- [Install](#install)  
+  - [Manual install](#manual-install)  
+  - [Hooks](#hooks)  
+    - [systemd initramfs](#systemd-initramfs)  
+    - [busybox initramfs](#busybox-initramfs)  
+- [Configuration](#configuration)  
+  - [Disks](#disks)  
+    - [Enabling TRIM](#enabling-trim)  
+    - [Additional parameters](#additional-parameters)  
+  - [Yubikeys](#yubikeys)  
+- [Recovery](#recovery)  
+- [Usage](#usage)  
+  - [Enrolling new key](#enrolling-new-key)  
+  - [Enrolling additional keys](#enrolling-additional-keys)  
+  - [Opening encrypted partition or disk](#opening-encrypted-partition-or-disk)  
+- [Limitations](#limitations)  
+- [Whitepaper](#whitepaper)  
+
 # Prerequisites
 This guide assumes you have fully bootable Archlinux on LUKS and Yubikey with one of its slots in challenge-response mode.
 
@@ -113,6 +136,42 @@ blkid /dev/sda3 -s UUID -o value
 ```
 If this does not return any value, it probably means that this disk or partition is not an LUKS container.
 
+**REMEMBER TO REGENERATE INITRAMFS AFTER EDITING `/etc/ykchrde.conf`**
+You can do this with:
+```
+mkinitcpio -P
+```
+### Enabling TRIM
+
+TRIM is disabled by default in LUKS because of its security implications ([http://asalor.blogspot.com/2011/08/trim-dm-crypt-problems.html](http://asalor.blogspot.com/2011/08/trim-dm-crypt-problems.html))
+
+**Make sure that your physical disk supports fully TRIM operations before enabling TRIM in LUKS**
+
+If you wish to enable trim on disk/partition, include `trim = 1` in its configuration
+For example:
+```
+[drive]
+uuid = 709cbfb7-7873-4b1a-953a-820f3510c131
+name = test
+trim = 1
+```
+**REMEMBER TO REGENERATE INITRAMFS AFTER EDITING `/etc/ykchrde.conf`**
+You can do this with:
+```
+mkinitcpio -P
+```
+### Additional parameters
+You can add any other valid `cryptsetup` parameters using `params = <param1> <param2>`
+
+This is passed into cryptsetup verbatim, so don't use quotation marks (") and use only valid parameters, as they aren't parsed in any way.
+
+For example:
+```
+[drive]
+uuid = 709cbfb7-7873-4b1a-953a-820f3510c131
+name = test
+params = --persistent
+```
 **REMEMBER TO REGENERATE INITRAMFS AFTER EDITING `/etc/ykchrde.conf`**
 You can do this with:
 ```
