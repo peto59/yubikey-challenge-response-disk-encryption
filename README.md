@@ -382,8 +382,7 @@ If this does not return any value, it probably means that this disk or partition
 # Limitations
 Using multiple Yubikeys, each with a different secret, is tedious but possible.
 
-~~The tcl version needs to be 8.6. Using a different tcl version won't work. If a newer version of tcl comes out, I'll try to update this to the latest version. If I forget or you need help using an older version of tcl, create an issue, and I'll try to help you.~~
-
+~~The tcl version needs to be 8.6. Using a different tcl version won't work. If a newer version of tcl comes out, I'll try to update this to the latest version. If I forget or you need help using an older version of tcl, create an issue, and I'll try to help you.~~  
 `ykchrde` does not depend on any specific version of any package.
 
 Currently, no rolling or randomised secret is used. If you have a good reason to implement this and any suggestions on **how** to implement it, create PR or an issue.
