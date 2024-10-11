@@ -86,6 +86,7 @@ function print_help() {
     echo "-d|--device - specifies device on which to take action. Format: /dev/<device>. Ignored if -u|--uuid is set."
     echo "-u|--uuid - specifies device on which to take action through UUID of partition or disk"
     echo "-n|--name - maps device to this name (/dev/mapper/<name>). Ignored if action is enroll."
+    echo "-s|--silent - uses output redirection instead of expect when opening containers. Used during boot"
     echo "-h|--help - prints this menu"
 }
 
@@ -151,11 +152,12 @@ function open() {
     local uuid=$1
     local password=$2
     local mapping=$3
+    local params=$4
     state=$(expect <(
     cat <<EXPECTSCRIPT
     log_user 0
     set timeout -1
-    spawn cryptsetup open /dev/disk/by-uuid/$uuid $mapping
+    spawn cryptsetup $params open /dev/disk/by-uuid/$uuid $mapping
     expect {
         "Enter passphrase for /dev/disk/by-uuid/$uuid: " {
             send "$password\n"
@@ -182,6 +184,18 @@ EXPECTSCRIPT
 echo "$state"
 }
 
+function open_silent() {
+    local uuid=$1
+    local password=$2
+    local mapping=$3
+    local params=$4
+
+    if ! echo $password | cryptsetup $params open /dev/disk/by-uuid/$uuid $mapping; then
+        echo "Invalid password"
+    else
+        echo "Device opened"
+    fi
+}
 ##########################################################################YUBIKEY SLOT############################################
 serial=$(ykinfo -s | tr -d 'serial: ')
 while [[ -z $serial ]]; do
@@ -203,8 +217,8 @@ echo "Using Yubikey slot: $yubikey_slot"
 ############################################################################END YUBIKEY SLOT######################################
 
 # Define options
-short_options='d:u:n:h'
-long_options='device:,uuid:,name:,help:'
+short_options='d:u:n:h:s'
+long_options='device:,uuid:,name:,help:,silent:'
 
 # Parse options
 args=$(getopt -s bash -o $short_options --long $long_options -- "$@")
@@ -213,6 +227,8 @@ args=$(getopt -s bash -o $short_options --long $long_options -- "$@")
 if [ $? != 0 ] ; then echo "Failed to parse options" >&2 ; exit 1 ; fi
 
 eval set -- "$args"
+
+silent=false
 
 # Process options
 while true ; do
@@ -232,6 +248,10 @@ while true ; do
         -n|--name)
             name="$2"
             shift 2
+            ;;
+        -s|--silent)
+            silent=true
+            shift 1
             ;;
         -h|--help)
             print_help
@@ -278,8 +298,9 @@ case $action in
             do
                 uuid=${drives["drives[$i]_uuid"]}
                 name=${drives["drives[$i]_name"]}
-                #echo "$uuid"
-                #echo "$name"
+                trim=${drives["drives[$i]_trim"]}
+                params=${drives["drives[$i]_params"]}
+
                 if [[ ! -e "/dev/disk/by-uuid/$uuid" ]]; then
                     echo "Device with uuid $uuid does not exist"
                     continue
@@ -300,11 +321,17 @@ case $action in
                     fi
                     echo "Remember to touch your yubikey"
 
+                    if [[ "$trim" == "1" ]]; then
+                        params="$params --allow-discards"
+                    fi
 
-                    state=$(open $uuid $(convert_user_password $password $uuid) $name)
+                    if [[ $silent ]]; then
+                        state=$(open_silent $uuid $(convert_user_password $password $uuid) $name $params)
+                    else
+                        state=$(open $uuid $(convert_user_password $password $uuid) $name $params)
+                    fi
 
-                    if [[ "$state" = "Invalid password" ]]; then
-                        echo "$state"
+                    if [[ "$state" == "Invalid password" ]]; then
                         unset password
                         should_continue="true"
                     else

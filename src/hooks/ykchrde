@@ -7,5 +7,5 @@ run_hook ()
     mkdir /dev/pts
     chmod 755 /dev/pts
     mount -t devpts -o gid=5,mode=620 none /dev/pts
-    /usr/bin/ykchrde.sh open
+    /usr/bin/ykchrde.sh open -s
 }
