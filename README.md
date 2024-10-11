@@ -145,7 +145,7 @@ mkinitcpio -P
 
 TRIM is disabled by default in LUKS because of its security implications ([http://asalor.blogspot.com/2011/08/trim-dm-crypt-problems.html](http://asalor.blogspot.com/2011/08/trim-dm-crypt-problems.html))
 
-**Make sure that your physical disk supports fully TRIM operations before enabling TRIM in LUKS**
+**Make sure that your physical disk fully supports TRIM operations before enabling TRIM in LUKS**
 
 If you wish to enable trim on disk/partition, include `trim = 1` in its configuration
 For example:
@@ -223,7 +223,7 @@ If you need to chroot into the machine, you need to unlock the LUKS container, w
 
 To open the `ykchrde` encrypted LUKS container without `ykchrde`, you need to have yubikey-personalization installed to have access to `ykchalresp`.
 
-Afterwards, run this command where `$password` is the password you used when enrolling password to the LUKS container, `$uuid` is the UUID of the container you wish to open, `$yubikey_slot` is the slot on the Yubikey which is used for challenge-response, `$disk` is the disk or partition and `$mapping` is the name under which you wish to open the container. **Don't forget the `|` between $password nad $uuid.**
+Afterwards, run this command where `$password` is the password you used when enrolling password to the LUKS container, `$uuid` is the UUID of the container you wish to open, `$yubikey_slot` is the slot on the Yubikey which is used for challenge-response, `$disk` is the disk or partition and `$mapping` is the name under which you wish to open the container. **Don't forget the `|` between $password and $uuid.**
 ```
 echo -n "$password|$uuid" | sha512sum | awk '{print $1}' | ykchalresp -$yubikey_slot -i - | sha512sum | awk '{print $1}' | cryptsetup open $disk $mapping
 ```
