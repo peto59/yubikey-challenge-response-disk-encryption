@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#sudo systemd-ask-password -n --no-tty --echo=no --id=cryptsetup-reencrypt:/dev/sda5 "cryptsetup reencrypt /dev/sda"
+
+
 #################################################CONFIG READ##############################################################
 # Define associative arrays
 declare -A config
@@ -81,6 +84,7 @@ function print_help() {
     echo "open - opens device, if used without parameters it will try to open all devices from ykchrde.conf"
     echo "enroll - enrolls new key to device"
     echo "enroll-additional - enrolls new key to device but uses yubikey to get old password. Use this to enroll another yubikey after you've killed interactive key slot"
+    echo "reencrypt - reencrypts given device"
     echo
     echo "OPTIONS:"
     echo "-d|--device - specifies device on which to take action. Format: /dev/<device>. Ignored if -u|--uuid is set."
@@ -217,8 +221,8 @@ echo "Using Yubikey slot: $yubikey_slot"
 ############################################################################END YUBIKEY SLOT######################################
 
 # Define options
-short_options='d:u:n:h:s'
-long_options='device:,uuid:,name:,help:,silent:'
+short_options='d:u:n:hs'
+long_options='device:,uuid:,name:,help,silent'
 
 # Parse options
 args=$(getopt -s bash -o $short_options --long $long_options -- "$@")
@@ -271,7 +275,7 @@ done
 action=$1
 
 if [[ -z "$action" ]]; then
-    echo "You need to specify action"
+    echo "You need to specify action, use -h to show help"
     exit 0
 fi
 if [[ "$action" != "open" || $drive_count -le 0 ]] || [[ -n $uuid || -n $device ]]; then
@@ -411,6 +415,9 @@ case $action in
         enroll_key $uuid $(convert_user_password $interactive_password $uuid) $(convert_user_password $yubikey_password $uuid)
         unset yubikey_password
         unset interactive_password
+    ;;
+    reencrypt)
+      echo "reencrypt"
     ;;
     *)
         echo "Invalid action!"
