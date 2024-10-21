@@ -24,6 +24,9 @@ package() {
 
     install -Dm644 "$srcdir/hooks/ykchrde" "$pkgdir/usr/lib/initcpio/hooks/ykchrde"
 
+    install -Dm644 "$srcdir/install/ykchrde" "$pkgdir/usr/lib/initcpio/install/ykchrde"
+    install -Dm644 "$srcdir/install/sd-ykchrde" "$pkgdir/usr/lib/initcpio/install/sd-ykchrde"
+
     install -Dm644 "$srcdir/systemd/ykchrde-reencrypt@.service" "$pkgdir/etc/systemd/system/ykchrde-reencrypt@.service"
     install -Dm644 "$srcdir/systemd/ykchrde-reencrypt@.timer" "$pkgdir/etc/systemd/system/ykchrde-reencrypt@.timer"
 
