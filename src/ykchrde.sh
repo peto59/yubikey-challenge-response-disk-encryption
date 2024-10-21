@@ -94,12 +94,6 @@ function print_help() {
     echo "-h|--help - prints this menu"
 }
 
-function convert_user_password() {
-    local password=$1
-    local uuid=$2
-    echo -n "$password|$uuid" | sha512sum | awk '{print $1}' | ykchalresp -$yubikey_slot -i - | sha512sum | awk '{print $1}'
-}
-
 function enroll_key() {
     local uuid=$1
     local old_password=$2
@@ -200,25 +194,6 @@ function open_silent() {
         echo "Device opened"
     fi
 }
-##########################################################################YUBIKEY SLOT############################################
-serial=$(ykinfo -s | tr -d 'serial: ')
-while [[ -z $serial ]]; do
-    echo "No Yubikey inserted"
-    echo "Press ctrl+c to exit"
-    sleep 1
-    serial=$(ykinfo -s | tr -d 'serial: ')
-done
-yubikey_slot=1
-for (( i=0; i<$yubikey_count; i++))
-do
-    if [[ "$serial" == "${yubikeys["yubikeys[$i]_serial"]}" ]]; then
-        yubikey_slot=${yubikeys["yubikeys[$i]_slot"]}
-        break 
-    fi
-done
-echo "Using Yubikey slot: $yubikey_slot"
-
-############################################################################END YUBIKEY SLOT######################################
 
 # Define options
 short_options='d:u:n:hs'
@@ -294,7 +269,25 @@ if [[ "$action" != "open" || $drive_count -le 0 ]] || [[ -n $uuid || -n $device 
         fi
     fi
 fi
+##########################################################################YUBIKEY SLOT############################################
+serial=$(ykinfo -s | tr -d 'serial: ')
+while [[ -z $serial ]]; do
+    echo "No Yubikey inserted"
+    echo "Press ctrl+c to exit"
+    sleep 1
+    serial=$(ykinfo -s | tr -d 'serial: ')
+done
+yubikey_slot=1
+for (( i=0; i<$yubikey_count; i++))
+do
+    if [[ "$serial" == "${yubikeys["yubikeys[$i]_serial"]}" ]]; then
+        yubikey_slot=${yubikeys["yubikeys[$i]_slot"]}
+        break 
+    fi
+done
+echo "Using Yubikey slot: $yubikey_slot"
 
+############################################################################END YUBIKEY SLOT######################################
 case $action in
     open)
         if [[ $drive_count -gt 0 && -z "${name+set}" && -z "${uuid+set}" ]]; then
@@ -330,9 +323,9 @@ case $action in
                     fi
 
                     if [[ $silent ]]; then
-                        state=$(open_silent $uuid $(convert_user_password $password $uuid) $name $params)
+                      state=$(open_silent $uuid $(./ykchrde_password_transform.sh $password $uuid) $name $params)
                     else
-                        state=$(open $uuid $(convert_user_password $password $uuid) $name $params)
+                        state=$(open $uuid $(./ykchrde_password_transform.sh $password $uuid) $name $params)
                     fi
 
                     if [[ "$state" == "Invalid password" ]]; then
@@ -361,7 +354,7 @@ case $action in
             read -s password
             echo
             echo "Remember to touch your yubikey"
-            open $uuid $(convert_user_password $password $uuid) $name
+            open $uuid $(./ykchrde_password_transform.sh $password $uuid) $name
             unset password
         fi
     ;;
@@ -386,7 +379,7 @@ case $action in
             exit 0
         fi
         echo "Remember to touch your yubikey"
-        enroll_key $uuid $interactive_password $(convert_user_password $yubikey_password $uuid)
+        enroll_key $uuid $interactive_password $(./ykchrde_password_transform.sh $yubikey_password $uuid)
         unset yubikey_password
         unset interactive_password
     ;;
@@ -412,15 +405,63 @@ case $action in
             exit 0
         fi
         echo "Remember to touch your yubikey TWICE"
-        enroll_key $uuid $(convert_user_password $interactive_password $uuid) $(convert_user_password $yubikey_password $uuid)
+        enroll_key $uuid $(./ykchrde_password_transform.sh $interactive_password $uuid) $(./ykchrde_password_transform.sh $yubikey_password $uuid)
         unset yubikey_password
         unset interactive_password
     ;;
     reencrypt)
-      echo "reencrypt"
+        if [[ ! -e "/dev/disk/by-uuid/$uuid" ]]; then
+            echo "Given device does not exists or is not LUKS container"
+            exit 0
+        fi
+        echo "f"
+        expect <(
+            cat <<EXPECTSCRIPT
+            log_user 0
+            set timeout -1
+            set loop 1
+            spawn cryptsetup $params reencrypt /dev/disk/by-uuid/$uuid
+            set main_pid \$spawn_id
+            puts "b"
+            while {\$loop == 1} {
+                expect {
+                    -re {^\s*Enter passphrase for key slot \d{1,2}:\s*$} {
+                        send_user "Gucci\n"
+                        spawn systemd-ask-password -n --no-tty --echo=no --id=cryptsetup-reencrypt:$device "cryptsetup reencrypt $device"
+                        set ask_password_pid \$spawn_id
+                        expect {
+                            eof {
+                                set full_output \$expect_out(buffer)
+                            } 
+                        }
+
+                        set spawn_id \$main_pid
+                        send "\$full_output\n"
+                    }
+                    -re {\s*No key available with this passphrase.\s*} {
+                        send_user "Wrong password\n"
+                    }
+                    -re {.*Finished, time.*} {
+                        send_user "Reencryption finished successfully\n"
+                        exit 0
+                    }
+                    timeout {
+                        send_user "Timed out"
+                        set loop 0
+                        exit 1
+                    }
+                    default {
+                        send_user "Insufficient priviledge to run cryptsetup, try with sudo\n"
+                        set loop 0
+                        exit 1
+                    }
+                }
+            }
+EXPECTSCRIPT
+        )
     ;;
     *)
         echo "Invalid action!"
-        echo "Valid actions are: open, enroll, enroll-additional"
+        echo "Valid actions are: open, enroll, enroll-additional or reencrypt"
     ;;
 esac

@@ -19,9 +19,12 @@ package() {
     install -Dm600 "$srcdir/ykchrde.conf" "$pkgdir/etc/ykchrde.conf"
 
     install -Dm700 "$srcdir/ykchrde.sh" "$pkgdir/usr/bin/ykchrde.sh"
+    install -Dm700 "$srcdir/ykchrde_password_transform.sh" "$pkgdir/usr/bin/ykchrde_password_transform.sh"
 
     install -Dm644 "$srcdir/hooks/ykchrde" "$pkgdir/usr/lib/initcpio/hooks/ykchrde"
 
     install -Dm644 "$srcdir/install/ykchrde" "$pkgdir/usr/lib/initcpio/install/ykchrde"
     install -Dm644 "$srcdir/install/sd-ykchrde" "$pkgdir/usr/lib/initcpio/install/sd-ykchrde"
+
+    systemctl daemon-reload
 }

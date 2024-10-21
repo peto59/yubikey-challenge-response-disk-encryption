@@ -1,1 +1,2 @@
-nothing, for now
+edit readme for reencrypt and new /usr/bin/ykchrde_password_transform.sh file
+recommend using /dev/disk/by-uuid with reencypt service

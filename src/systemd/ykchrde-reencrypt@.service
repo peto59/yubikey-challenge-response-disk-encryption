@@ -1,0 +1,13 @@
+[Unit]
+Description=LUKS container reencryption on %i
+
+[Service]
+Nice=19
+Type=forking
+SuccessExitStatus=0
+KillSignal=SIGINT
+RemainAfterExit=no
+ExecStart=/usr/bin/ykchrde.sh reencrypt -d %i
+
+[Install]
+WantedBy=timers.target

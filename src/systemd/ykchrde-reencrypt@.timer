@@ -1,0 +1,11 @@
+[Unit]
+Description=Monthly LUKS container reencryption on %i
+
+[Timer]
+OnCalendar=Monthly
+Persistent=true
+AccuracySec=1h
+RandomizedDelaySec=2h
+
+[Install]
+WantedBy=timers.target
