@@ -16,3 +16,4 @@ test*.sh
 *.zst
 /pkg
 /src/yubikey-challange-response-disk-encryption
+*.kate-swp

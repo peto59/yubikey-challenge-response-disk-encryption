@@ -1,2 +1,2 @@
-edit readme for reencrypt and new /usr/bin/ykchrde_password_transform.sh file
+edit readme for reencrypt, new /usr/bin/ykchrde_password_transform.sh and new /usr/bin/ykchrde_get_yubikey_serial.sh file
 recommend using /dev/disk/by-uuid with reencypt service

@@ -1,81 +1,4 @@
-#!/bin/bash
-
-#sudo systemd-ask-password -n --no-tty --echo=no --id=cryptsetup-reencrypt:/dev/sda5 "cryptsetup reencrypt /dev/sda"
-
-
-#################################################CONFIG READ##############################################################
-# Define associative arrays
-declare -A config
-declare -A drives
-declare -A yubikeys
-
-# Initialize drive index
-drive_index=0
-yubikey_index=0
-
-# Read the configuration file
-while IFS='=' read -r key value; do
-    # Skip empty lines and comments
-    [[ -z "$key" || $key =~ ^\# ]] && continue
-    
-    # Remove spaces around key and value
-    key=$(echo $key | tr -d ' ')
-    value=$(echo $value | tr -d ' ')
-
-    # Check for section headers
-    if [[ $key == \[*\] ]]; then
-        case $key in
-            "[general]")
-                section="config"
-                ;;
-            "[drive]")
-                section="drives[$drive_index]"
-                ((drive_index++))
-                ;;
-            "[yubikey]")
-                section="yubikeys[$yubikey_index]"
-                ((yubikey_index++))
-                ;;
-
-        esac
-    else
-        # Assign value to the current section
-        case $section in
-            config)
-                config["$key"]="$value"
-                ;;
-            drives\[*\])
-                drives["${section}_$key"]="$value"
-                ;;
-            yubikeys\[*\])
-                yubikeys["${section}_$key"]="$value"
-                ;;
-
-        esac
-        
-    fi
-done < "/etc/ykchrde.conf"
-
-drive_count=$drive_index
-yubikey_count=$yubikey_index
-
-# Print out the parsed configuration
-#echo "Config:"
-#for key in "${!config[@]}"; do
-#    echo "$key=${config[$key]}"
-#done
-#
-#echo "Drives:"
-#for i in "${!drives[@]}"; do
-#    # Extract drive index and key from the composite key
-#    IFS='_' read -r drive_index key <<< "$i"
-#    echo "Drive $drive_index:"
-#    echo "  $key=${drives[$i]}"
-#done
-
-#To access value you use ${drives["drives[$index]_$key"]}
-#To access value you use ${yubikeys["yubikeys[$index]_$key"]}
-#################################################################################END CONFIG READ#################################################################
+#!/usr/bin/bash
 
 function print_help() {
     echo "usage: ykchrde ACTION OPTIONS"
@@ -253,6 +176,81 @@ if [[ -z "$action" ]]; then
     echo "You need to specify action, use -h to show help"
     exit 0
 fi
+#################################################CONFIG READ##############################################################
+if [[ "$action" != "reencrypt" ]]; then
+    # Define associative arrays
+    declare -A config
+    declare -A drives
+    declare -A yubikeys
+
+    # Initialize drive index
+    drive_index=0
+    yubikey_index=0
+
+    # Read the configuration file
+    while IFS='=' read -r key value; do
+        # Skip empty lines and comments
+        [[ -z "$key" || $key =~ ^\# ]] && continue
+
+        # Remove spaces around key and value
+        key=$(echo $key | tr -d ' ')
+        value=$(echo $value | tr -d ' ')
+
+        # Check for section headers
+        if [[ $key == \[*\] ]]; then
+            case $key in
+                "[general]")
+                    section="config"
+                    ;;
+                "[drive]")
+                    section="drives[$drive_index]"
+                    ((drive_index++))
+                    ;;
+                "[yubikey]")
+                    section="yubikeys[$yubikey_index]"
+                    ((yubikey_index++))
+                    ;;
+
+            esac
+        else
+            # Assign value to the current section
+            case $section in
+                config)
+                    config["$key"]="$value"
+                    ;;
+                drives\[*\])
+                    drives["${section}_$key"]="$value"
+                    ;;
+                yubikeys\[*\])
+                    yubikeys["${section}_$key"]="$value"
+                    ;;
+
+            esac
+
+        fi
+    done < "/etc/ykchrde.conf"
+
+    drive_count=$drive_index
+    yubikey_count=$yubikey_index
+
+fi
+
+# echo "Config:"
+# for key in "${!config[@]}"; do
+#     echo "$key=${config[$key]}"
+# done
+#
+# echo "Drives:"
+# for i in "${!drives[@]}"; do
+#     # Extract drive index and key from the composite key
+#     IFS='_' read -r drive_index key <<< "$i"
+#     echo "Drive $drive_index:"
+#     echo "  $key=${drives[$i]}"
+# done
+
+#To access value you use ${drives["drives[$index]_$key"]}
+#To access value you use ${yubikeys["yubikeys[$index]_$key"]}
+#################################################################################END CONFIG READ#################################################################
 if [[ "$action" != "open" || $drive_count -le 0 ]] || [[ -n $uuid || -n $device ]]; then
     if [[ -z "${uuid+set}" ]]; then
         if [[ -z "${device+set}" ]]; then
@@ -270,26 +268,29 @@ if [[ "$action" != "open" || $drive_count -le 0 ]] || [[ -n $uuid || -n $device 
     fi
 fi
 ##########################################################################YUBIKEY SLOT############################################
-serial=$(ykinfo -s | tr -d 'serial: ')
-while [[ -z $serial ]]; do
-    echo "No Yubikey inserted"
-    echo "Press ctrl+c to exit"
-    sleep 1
+if [[ "$action" != "reencrypt" ]]; then
     serial=$(ykinfo -s | tr -d 'serial: ')
-done
-yubikey_slot=1
-for (( i=0; i<$yubikey_count; i++))
-do
-    if [[ "$serial" == "${yubikeys["yubikeys[$i]_serial"]}" ]]; then
-        yubikey_slot=${yubikeys["yubikeys[$i]_slot"]}
-        break 
-    fi
-done
+    while [[ -z $serial ]]; do
+        echo "No Yubikey inserted"
+        echo "Press ctrl+c to exit"
+        sleep 1
+        serial=$(ykinfo -s | tr -d 'serial: ')
+    done
+    yubikey_slot=1
+    for (( i=0; i<$yubikey_count; i++))
+    do
+        if [[ "$serial" == "${yubikeys["yubikeys[$i]_serial"]}" ]]; then
+            yubikey_slot=${yubikeys["yubikeys[$i]_slot"]}
+            break
+        fi
+    done
+fi
 echo "Using Yubikey slot: $yubikey_slot"
-
 ############################################################################END YUBIKEY SLOT######################################
+
 case $action in
     open)
+        # automatic open of all drives in ykchrde.conf
         if [[ $drive_count -gt 0 && -z "${name+set}" && -z "${uuid+set}" ]]; then
             for (( i=0; i<$drive_count; i++))
             do
@@ -323,9 +324,9 @@ case $action in
                     fi
 
                     if [[ $silent ]]; then
-                      state=$(open_silent $uuid $(./ykchrde_password_transform.sh $password $uuid) $name $params)
+                      state=$(open_silent $uuid $(./ykchrde_password_transform.sh $password $uuid $yubikey_slot) $name $params)
                     else
-                        state=$(open $uuid $(./ykchrde_password_transform.sh $password $uuid) $name $params)
+                        state=$(open $uuid $(./ykchrde_password_transform.sh $password $uuid $yubikey_slot) $name $params)
                     fi
 
                     if [[ "$state" == "Invalid password" ]]; then
@@ -342,6 +343,7 @@ case $action in
                 done
             done
         else
+        # manual open of single drive
             if [[ -z "${name+set}" ]]; then
                 echo "You need to specify name to map the device to. use -n"
                 exit 0
@@ -354,7 +356,7 @@ case $action in
             read -s password
             echo
             echo "Remember to touch your yubikey"
-            open $uuid $(./ykchrde_password_transform.sh $password $uuid) $name
+            open $uuid $(./ykchrde_password_transform.sh $password $uuid $yubikey_slot) $name
             unset password
         fi
     ;;
@@ -379,7 +381,7 @@ case $action in
             exit 0
         fi
         echo "Remember to touch your yubikey"
-        enroll_key $uuid $interactive_password $(./ykchrde_password_transform.sh $yubikey_password $uuid)
+        enroll_key $uuid $interactive_password $(./ykchrde_password_transform.sh $yubikey_password $uuid $yubikey_slot)
         unset yubikey_password
         unset interactive_password
     ;;
@@ -405,7 +407,7 @@ case $action in
             exit 0
         fi
         echo "Remember to touch your yubikey TWICE"
-        enroll_key $uuid $(./ykchrde_password_transform.sh $interactive_password $uuid) $(./ykchrde_password_transform.sh $yubikey_password $uuid)
+        enroll_key $uuid $(./ykchrde_password_transform.sh $interactive_password $uuid $yubikey_slot) $(./ykchrde_password_transform.sh $yubikey_password $uuid $yubikey_slot)
         unset yubikey_password
         unset interactive_password
     ;;
@@ -414,31 +416,81 @@ case $action in
             echo "Given device does not exists or is not LUKS container"
             exit 0
         fi
-        echo "f"
         expect <(
             cat <<EXPECTSCRIPT
-            log_user 0
+            log_user 1
             set timeout -1
             set loop 1
             spawn cryptsetup $params reencrypt /dev/disk/by-uuid/$uuid
             set main_pid \$spawn_id
-            puts "b"
+            set user_password ""
+            set yubikey_password ""
+            set key_slot_number 0
             while {\$loop == 1} {
                 expect {
-                    -re {^\s*Enter passphrase for key slot \d{1,2}:\s*$} {
+                    -re {^\s*Enter passphrase for key slot (\d{1,2}):\s*$} {
+                        #upvar key_slot_number key_slot_number
+
                         send_user "Gucci\n"
-                        spawn systemd-ask-password -n --no-tty --echo=no --id=cryptsetup-reencrypt:$device "cryptsetup reencrypt $device"
-                        set ask_password_pid \$spawn_id
-                        expect {
-                            eof {
-                                set full_output \$expect_out(buffer)
-                            } 
+
+                        set key_slot_number_local \$expect_out(1,string)
+                        #puts "The key slot number is: \$key_slot_number_local"
+                        #puts "Last key slot number was: \$key_slot_number"
+                        if {\$key_slot_number_local != \$key_slot_number} {
+                            set key_slot_number \$key_slot_number_local
+                            set user_password ""
+                            set yubikey_password ""
+                        }
+
+                        if {\$user_password == ""} {
+                            spawn systemd-ask-password -n --no-tty --echo=no --timeout=0 --id="cryptsetup-reencrypt:$device:\$key_slot_number_local" "cryptsetup reencrypt $device keyslot: \$key_slot_number_local: "
+                            set ask_password_pid \$spawn_id
+                            expect {
+                                eof {
+                                    #upvar user_password user_password
+                                    set user_password \$expect_out(buffer)
+                                }
+                            }
+
+                            set yubikey_slot 1
+
+                            spawn ./ykchrde_get_yubikey_serial.sh
+                            set yubikey_serial_pid \$spawn_id
+                            expect {
+                                eof {
+                                    #upvar yubikey_slot yubikey_slot
+                                    set yubikey_slot \$expect_out(buffer)
+                                }
+                            }
+                            puts "Spawning password transform with slot \$yubikey_slot"
+                            spawn ./ykchrde_password_transform.sh \$user_password $uuid \$yubikey_slot
+                            set password_transform_pid \$spawn_id
+                            expect {
+                                eof {
+                                    #upvar yubikey_password yubikey_password
+                                    set yubikey_password \$expect_out(buffer)
+                                }
+                            }
                         }
 
                         set spawn_id \$main_pid
-                        send "\$full_output\n"
+
+                        if {\$yubikey_password != ""} {
+                            puts "Sending: \$yubikey_password\n"
+                            send "\$yubikey_password\n"
+                        } elseif {\$user_password != ""} {
+                            puts "Sending: \$user_password\n"
+                            send "\$user_password\n"
+                        }
                     }
                     -re {\s*No key available with this passphrase.\s*} {
+                        #upvar user_password user_password
+                        #upvar yubikey_password yubikey_password
+                        if {\$yubikey_password != ""} {
+                            set yubikey_password ""
+                        } elseif {\$user_password != ""} {
+                            set user_password ""
+                        }
                         send_user "Wrong password\n"
                     }
                     -re {.*Finished, time.*} {
