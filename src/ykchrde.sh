@@ -5,8 +5,10 @@ function print_help() {
     echo
     echo "ACTIONS:"
     echo "open - opens device, if used without parameters it will try to open all devices from ykchrde.conf"
-    echo "enroll - enrolls new key to device"
-    echo "enroll-additional - enrolls new key to device but uses yubikey to get old password. Use this to enroll another yubikey after you've killed interactive key slot"
+    echo "enroll - enrolls new yubikey key to device"
+    echo "enroll-additional - enrolls new yubikey key to device but uses yubikey to get old password. Use this to enroll another yubikey after you've killed interactive key slot"
+    echo "enroll-interactive - enrolls new interactive (non-yubikey) key to the device. Not recommended to use outside of emergencies."
+    echo "delete - deletes given yubikey key."
     echo "reencrypt - reencrypts given device"
     echo
     echo "OPTIONS:"
@@ -117,7 +119,7 @@ function open_silent() {
         echo "Device opened"
     fi
 }
-
+########################################################MAIN LOGIC####################################################
 # Define options
 short_options='d:u:n:hs'
 long_options='device:,uuid:,name:,help,silent'
@@ -250,7 +252,7 @@ fi
 
 #To access value you use ${drives["drives[$index]_$key"]}
 #To access value you use ${yubikeys["yubikeys[$index]_$key"]}
-#################################################################################END CONFIG READ#################################################################
+###################################################################GET UUID############################################################
 if [[ "$action" != "open" || $drive_count -le 0 ]] || [[ -n $uuid || -n $device ]]; then
     if [[ -z "${uuid+set}" ]]; then
         if [[ -z "${device+set}" ]]; then
@@ -286,7 +288,7 @@ if [[ "$action" != "reencrypt" ]]; then
     done
 fi
 echo "Using Yubikey slot: $yubikey_slot"
-############################################################################END YUBIKEY SLOT######################################
+############################################################################ACTIONS###############################################
 
 case $action in
     open)
@@ -411,6 +413,37 @@ case $action in
         unset yubikey_password
         unset interactive_password
     ;;
+    enroll-interactive)
+        if [[ ! -e "/dev/disk/by-uuid/$uuid" ]]; then
+            echo "Given device does not exists or is not LUKS container"
+            exit 0
+        fi
+        echo "ATTENTION: This enrolls new INTERACTIVE (NON-YUBIKEY) key to this drive."
+        echo "If this is not your intention press ctrl+c to exit."
+
+        echo -n "Enter LUKS key: "
+        read -s yubikey_password
+        echo
+        echo -n "Enter new key: "
+        read -s interactive_password
+        echo
+        echo -n "Repeat new key: "
+        read -s interactive_password_rpt
+        echo
+        if ! [ "$interactive_password" = "$interactive_password_rpt" ]; then
+            unset $interactive_password
+            unset $interactive_password_rpt
+            echo "Passwords do not match."
+            exit 0
+        fi
+        echo "Remember to touch your yubikey TWICE"
+        enroll_key $uuid $(./ykchrde_password_transform.sh $yubikey_password $uuid $yubikey_slot) $interactive_password
+        unset yubikey_password
+        unset interactive_password
+    ;;
+    delete)
+      echo "not yet implemented"
+    ;;
     reencrypt)
         if [[ ! -e "/dev/disk/by-uuid/$uuid" ]]; then
             echo "Given device does not exists or is not LUKS container"
@@ -514,6 +547,7 @@ EXPECTSCRIPT
     ;;
     *)
         echo "Invalid action!"
-        echo "Valid actions are: open, enroll, enroll-additional or reencrypt"
+        echo "Valid actions are: open, enroll, enroll-additional, enroll-interactive, delete or reencrypt"
+        exit 1
     ;;
 esac
