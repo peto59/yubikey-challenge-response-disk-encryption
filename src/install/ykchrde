@@ -11,6 +11,7 @@ build() {
     add_binary /usr/bin/tr
     add_binary /usr/bin/getopt
     add_binary /usr/bin/blkid
+    add_binary /usr/bin/xargs
     add_binary /usr/bin/ykchrde.sh
     add_binary /usr/bin/ykchrde_password_transform.sh
 

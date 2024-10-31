@@ -1,4 +1,5 @@
 #!/usr/bin/bash
+set -eu -o pipefail
 
 function print_help() {
     echo "usage: ykchrde ACTION OPTIONS"
@@ -15,6 +16,7 @@ function print_help() {
     echo "-d|--device - specifies device on which to take action. Format: /dev/<device>. Ignored if -u|--uuid is set."
     echo "-u|--uuid - specifies device on which to take action through UUID of partition or disk"
     echo "-n|--name - maps device to this name (/dev/mapper/<name>). Ignored if action is enroll."
+    echo "-p|--params - passes these params to cryptsetup verbatim without any checks, use quotation marks (\") for multiple params"
     echo "-s|--silent - uses output redirection instead of expect when opening containers. Used during boot"
     echo "-h|--help - prints this menu"
 }
@@ -75,7 +77,10 @@ function open() {
     local uuid=$1
     local password=$2
     local mapping=$3
-    local params=$4
+    local params=""
+    if [[ -n "${4+set}" ]]; then
+        local params=$4
+    fi
     state=$(expect <(
     cat <<EXPECTSCRIPT
     log_user 0
@@ -111,7 +116,10 @@ function open_silent() {
     local uuid=$1
     local password=$2
     local mapping=$3
-    local params=$4
+    local params=""
+    if [[ -n "${4+set}" ]]; then
+        local params=$4
+    fi
 
     if ! echo $password | cryptsetup $params open /dev/disk/by-uuid/$uuid $mapping; then
         echo "Invalid password"
@@ -121,18 +129,21 @@ function open_silent() {
 }
 ########################################################MAIN LOGIC####################################################
 # Define options
-short_options='d:u:n:hs'
-long_options='device:,uuid:,name:,help,silent'
+short_options='d:u:n:p:hs'
+long_options='device:,uuid:,name:,params:,help,silent'
 
 # Parse options
 args=$(getopt -s bash -o $short_options --long $long_options -- "$@")
 
 # Check for errors
 if [ $? != 0 ] ; then echo "Failed to parse options" >&2 ; exit 1 ; fi
-
 eval set -- "$args"
 
 silent=false
+device=""
+uuid=""
+name=""
+params=""
 
 # Process options
 while true ; do
@@ -151,6 +162,10 @@ while true ; do
             ;;
         -n|--name)
             name="$2"
+            shift 2
+            ;;
+        -p|--params)
+            params="$2"
             shift 2
             ;;
         -s|--silent)
@@ -206,11 +221,11 @@ if [[ "$action" != "reencrypt" ]]; then
                     ;;
                 "[drive]")
                     section="drives[$drive_index]"
-                    ((drive_index++))
+                    drive_index=$((drive_index + 1))
                     ;;
                 "[yubikey]")
                     section="yubikeys[$yubikey_index]"
-                    ((yubikey_index++))
+                    yubikey_index=$((yubikey_index + 1))
                     ;;
 
             esac
@@ -254,8 +269,8 @@ fi
 #To access value you use ${yubikeys["yubikeys[$index]_$key"]}
 ###################################################################GET UUID############################################################
 if [[ "$action" != "open" || $drive_count -le 0 ]] || [[ -n $uuid || -n $device ]]; then
-    if [[ -z "${uuid+set}" ]]; then
-        if [[ -z "${device+set}" ]]; then
+    if [[ -z $uuid ]]; then
+        if [[ -z $device ]]; then
             echo "You need to specify device either by -d|--device or -u|--uuid. -u is preferred"
             exit 0
         fi
@@ -270,6 +285,7 @@ if [[ "$action" != "open" || $drive_count -le 0 ]] || [[ -n $uuid || -n $device 
     fi
 fi
 ##########################################################################YUBIKEY SLOT############################################
+yubikey_slot=1
 if [[ "$action" != "reencrypt" ]]; then
     serial=$(ykinfo -s | tr -d 'serial: ')
     while [[ -z $serial ]]; do
@@ -278,7 +294,6 @@ if [[ "$action" != "reencrypt" ]]; then
         sleep 1
         serial=$(ykinfo -s | tr -d 'serial: ')
     done
-    yubikey_slot=1
     for (( i=0; i<$yubikey_count; i++))
     do
         if [[ "$serial" == "${yubikeys["yubikeys[$i]_serial"]}" ]]; then
@@ -358,7 +373,7 @@ case $action in
             read -s password
             echo
             echo "Remember to touch your yubikey"
-            open $uuid $(./ykchrde_password_transform.sh $password $uuid $yubikey_slot) $name
+            open $uuid $(./ykchrde_password_transform.sh $password $uuid $yubikey_slot) $name $params
             unset password
         fi
     ;;
