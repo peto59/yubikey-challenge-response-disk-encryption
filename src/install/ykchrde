@@ -14,6 +14,7 @@ build() {
     add_binary /usr/bin/xargs
     add_binary /usr/bin/ykchrde.sh
     add_binary /usr/bin/ykchrde_password_transform.sh
+    add_binary /usr/bin/ykchrde_get_yubikey_serial.sh
 
     add_file /etc/ykchrde.conf
 
