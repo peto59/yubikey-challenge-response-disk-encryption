@@ -30,5 +30,5 @@ package() {
     install -Dm644 "$srcdir/systemd/ykchrde-reencrypt@.service" "$pkgdir/etc/systemd/system/ykchrde-reencrypt@.service"
     install -Dm644 "$srcdir/systemd/ykchrde-reencrypt@.timer" "$pkgdir/etc/systemd/system/ykchrde-reencrypt@.timer"
 
-    systemctl daemon-reload
+    ln -s /usr/bin/ykchrde.sh "$pkgdir/usr/bin/ykchrde"
 }
